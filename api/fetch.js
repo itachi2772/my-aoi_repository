@@ -1,49 +1,42 @@
-// api/fetch.js
 export default async function handler(req, res) {
+  const { aadhaar, key } = req.query;
+
+  // 🟢 If no Aadhaar given → show usage info
+  if (!aadhaar) {
+    return res.status(200).json({
+      message: "🟢 Aadhaar Family Info API by @Mr_Itachi007",
+      usage: "/fetch?aadhaar=YOUR_AADHAAR_NUMBER&key=itachi007"
+    });
+  }
+
+  // 🛡️ Key check
+  if (key !== "itachi007") {
+    return res.status(403).json({
+      error: "❌ Invalid API key",
+      note: "Use key=itachi007 to access this API"
+    });
+  }
+
   try {
-    const { aadhaar, key } = req.query;
+    // 🔹 Your main source API (with real working key)
+    const sourceApi = `https://family-members-n5um.vercel.app/fetch?aadhaar=${aadhaar}&key=paidchx`;
 
-    // Basic validation
-    if (!aadhaar) {
-      return res.status(400).json({ error: "Missing 'aadhaar' parameter" });
-    }
-
-    if (!key || key !== "itachi007") {
-      return res.status(401).json({ error: "Invalid or missing key. Use key=itachi007" });
-    }
-
-    // Original source API (the real one)
-    const upstreamUrl = `https://family-members-n5um.vercel.app/fetch?aadhaar=${encodeURIComponent(
-      aadhaar
-    )}&key=paidchx`;
-
-    // Fetch from the original source
-    const response = await fetch(upstreamUrl);
-    if (!response.ok) {
-      return res.status(502).json({
-        error: "Upstream API Error",
-        status: response.status,
-      });
-    }
-
+    // 🔹 Fetch from original API
+    const response = await fetch(sourceApi);
     const data = await response.json();
 
-    // Final output (customized)
-    const finalResponse = {
-      name: "Itachi",
-      ...data,
-      credit: "by @Mr_Itachi007",
-    };
+    // 🔹 Send response with credit
+    return res.status(200).json({
+      developer: "@Mr_Itachi007",
+      source: "family-members-n5um.vercel.app",
+      result: data,
+      credit: "by @Mr_Itachi007"
+    });
 
-    // Allow CORS
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Content-Type", "application/json");
-
-    res.status(200).json(finalResponse);
   } catch (error) {
-    res.status(500).json({
-      error: "Internal server error",
-      message: error.message,
+    return res.status(500).json({
+      error: "⚠️ Failed to fetch data",
+      details: error.message
     });
   }
 }
